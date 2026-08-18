@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{% if sessao is defined and sessao %}Editar{% else %}Nova{% endif %} Sessão{% endblock %}
+{% block content %}
+<h1>{% if sessao is defined and sessao %}Editar Sessão{% else %}Nova Sessão{% endif %}</h1>
+
+<form method="POST" class="form">
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="paciente_id">Paciente *</label>
+            <select id="paciente_id" name="paciente_id" required {% if sessao is defined and sessao %}disabled{% endif %}>
+                <option value="">Selecione...</option>
+                {% for p in pacientes %}
+                <option value="{{ p.id }}" {% if (paciente_id and paciente_id|string == p.id|string) or (sessao is defined and sessao and sessao.paciente_id == p.id) %}selected{% endif %}>{{ p.nome }}</option>
+                {% endfor %}
+            </select>
+            {% if sessao is defined and sessao %}
+            <input type="hidden" name="paciente_id" value="{{ sessao.paciente_id }}">
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="data">Data *</label>
+            <input type="date" id="data" name="data" value="{{ sessao.data.strftime('%Y-%m-%d') if sessao is defined and sessao else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="horario_inicio">Horário Início</label>
+            <input type="time" id="horario_inicio" name="horario_inicio" value="{{ sessao.horario_inicio if sessao is defined and sessao and sessao.horario_inicio else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="horario_fim">Horário Fim</label>
+            <input type="time" id="horario_fim" name="horario_fim" value="{{ sessao.horario_fim if sessao is defined and sessao and sessao.horario_fim else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="presenca">Presença</label>
+            <select id="presenca" name="presenca">
+                {% for opt in ['Compareceu', 'Faltou', 'Cancelou', 'Remarcou'] %}
+                <option value="{{ opt }}" {% if sessao is defined and sessao and sessao.presenca == opt %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="pago">Pago</label>
+            <select id="pago" name="pago">
+                <option value="Sim" {% if sessao is defined and sessao and sessao.pago %}selected{% endif %}>Sim</option>
+                <option value="Não" {% if not (sessao is defined and sessao and sessao.pago) %}selected{% endif %}>Não</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="valor_pago">Valor Pago (R$)</label>
+            <input type="number" id="valor_pago" name="valor_pago" step="0.01" min="0" value="{{ sessao.valor_pago if sessao is defined and sessao else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="forma_pagamento">Forma de Pagamento</label>
+            <select id="forma_pagamento" name="forma_pagamento">
+                <option value="">-</option>
+                {% for opt in ['Pix', 'Dinheiro', 'Cartão de Crédito', 'Cartão de Débito', 'Convênio', 'Transferência'] %}
+                <option value="{{ opt }}" {% if sessao is defined and sessao and sessao.forma_pagamento == opt %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group full-width">
+            <label for="observacoes">Observações</label>
+            <textarea id="observacoes" name="observacoes" rows="3">{{ sessao.observacoes if sessao is defined and sessao else '' }}</textarea>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a href="{{ url_for('listar_sessoes') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

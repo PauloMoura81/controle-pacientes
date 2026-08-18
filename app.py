@@ -1,0 +1,290 @@
+"""
+Controle de Pacientes - App Web Local
+Desenvolvido para psicólogos gerenciarem seus atendimentos.
+"""
+
+import os
+import sys
+from datetime import datetime, date
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
+# Determine data directory (user's home)
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATA_DIR = os.path.join(BASE_DIR, "dados")
+os.makedirs(DATA_DIR, exist_ok=True)
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'psico-controle-local-2024'
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(DATA_DIR, 'pacientes.db')}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+
+# ==================== MODELS ====================
+
+class Paciente(db.Model):
+    __tablename__ = 'pacientes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(200), nullable=False)
+    data_nascimento = db.Column(db.Date, nullable=True)
+    telefone = db.Column(db.String(20), nullable=True)
+    email = db.Column(db.String(200), nullable=True)
+    contato_emergencia = db.Column(db.String(200), nullable=True)
+    tel_emergencia = db.Column(db.String(20), nullable=True)
+    data_inicio = db.Column(db.Date, nullable=True)
+    modalidade = db.Column(db.String(20), default='Presencial')  # Presencial, Online, Híbrido
+    frequencia = db.Column(db.String(20), default='Semanal')  # Semanal, Quinzenal, Mensal
+    dia_horario = db.Column(db.String(50), nullable=True)
+    valor_sessao = db.Column(db.Float, default=0.0)
+    forma_pagamento = db.Column(db.String(20), default='Particular')  # Particular, Convênio
+    status = db.Column(db.String(20), default='Ativo')  # Ativo, Pausado, Alta, Desistência
+    observacoes = db.Column(db.Text, nullable=True)
+    criado_em = db.Column(db.DateTime, default=datetime.now)
+
+    sessoes = db.relationship('Sessao', backref='paciente', lazy=True, order_by='Sessao.data.desc()')
+
+
+class Sessao(db.Model):
+    __tablename__ = 'sessoes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    paciente_id = db.Column(db.Integer, db.ForeignKey('pacientes.id'), nullable=False)
+    data = db.Column(db.Date, nullable=False)
+    horario_inicio = db.Column(db.String(5), nullable=True)
+    horario_fim = db.Column(db.String(5), nullable=True)
+    presenca = db.Column(db.String(20), default='Compareceu')  # Compareceu, Faltou, Cancelou, Remarcou
+    numero_sessao = db.Column(db.Integer, nullable=True)
+    pago = db.Column(db.Boolean, default=False)
+    valor_pago = db.Column(db.Float, default=0.0)
+    forma_pagamento = db.Column(db.String(30), nullable=True)
+    observacoes = db.Column(db.Text, nullable=True)
+
+
+# ==================== ROUTES ====================
+
+@app.route('/')
+def index():
+    """Dashboard principal"""
+    total_pacientes = Paciente.query.filter_by(status='Ativo').count()
+    total_sessoes_mes = Sessao.query.filter(
+        db.extract('month', Sessao.data) == date.today().month,
+        db.extract('year', Sessao.data) == date.today().year
+    ).count()
+    receita_mes = db.session.query(db.func.sum(Sessao.valor_pago)).filter(
+        db.extract('month', Sessao.data) == date.today().month,
+        db.extract('year', Sessao.data) == date.today().year,
+        Sessao.pago == True
+    ).scalar() or 0.0
+    a_receber = db.session.query(db.func.sum(Sessao.valor_pago)).filter(
+        Sessao.pago == False,
+        Sessao.presenca == 'Compareceu'
+    ).scalar() or 0.0
+
+    proximas_sessoes = Sessao.query.filter(
+        Sessao.data >= date.today()
+    ).order_by(Sessao.data.asc()).limit(5).all()
+
+    return render_template('index.html',
+                           total_pacientes=total_pacientes,
+                           total_sessoes_mes=total_sessoes_mes,
+                           receita_mes=receita_mes,
+                           a_receber=a_receber,
+                           proximas_sessoes=proximas_sessoes)
+
+
+# --- Pacientes ---
+
+@app.route('/pacientes')
+def listar_pacientes():
+    status_filter = request.args.get('status', 'Ativo')
+    if status_filter == 'Todos':
+        pacientes = Paciente.query.order_by(Paciente.nome).all()
+    else:
+        pacientes = Paciente.query.filter_by(status=status_filter).order_by(Paciente.nome).all()
+    return render_template('pacientes.html', pacientes=pacientes, status_filter=status_filter)
+
+
+@app.route('/pacientes/novo', methods=['GET', 'POST'])
+def novo_paciente():
+    if request.method == 'POST':
+        paciente = Paciente(
+            nome=request.form['nome'],
+            data_nascimento=_parse_date(request.form.get('data_nascimento')),
+            telefone=request.form.get('telefone'),
+            email=request.form.get('email'),
+            contato_emergencia=request.form.get('contato_emergencia'),
+            tel_emergencia=request.form.get('tel_emergencia'),
+            data_inicio=_parse_date(request.form.get('data_inicio')),
+            modalidade=request.form.get('modalidade', 'Presencial'),
+            frequencia=request.form.get('frequencia', 'Semanal'),
+            dia_horario=request.form.get('dia_horario'),
+            valor_sessao=float(request.form.get('valor_sessao') or 0),
+            forma_pagamento=request.form.get('forma_pagamento', 'Particular'),
+            status='Ativo',
+            observacoes=request.form.get('observacoes')
+        )
+        db.session.add(paciente)
+        db.session.commit()
+        flash('Paciente cadastrado com sucesso!', 'success')
+        return redirect(url_for('listar_pacientes'))
+    return render_template('paciente_form.html', paciente=None)
+
+
+@app.route('/pacientes/<int:id>/editar', methods=['GET', 'POST'])
+def editar_paciente(id):
+    paciente = Paciente.query.get_or_404(id)
+    if request.method == 'POST':
+        paciente.nome = request.form['nome']
+        paciente.data_nascimento = _parse_date(request.form.get('data_nascimento'))
+        paciente.telefone = request.form.get('telefone')
+        paciente.email = request.form.get('email')
+        paciente.contato_emergencia = request.form.get('contato_emergencia')
+        paciente.tel_emergencia = request.form.get('tel_emergencia')
+        paciente.data_inicio = _parse_date(request.form.get('data_inicio'))
+        paciente.modalidade = request.form.get('modalidade', 'Presencial')
+        paciente.frequencia = request.form.get('frequencia', 'Semanal')
+        paciente.dia_horario = request.form.get('dia_horario')
+        paciente.valor_sessao = float(request.form.get('valor_sessao') or 0)
+        paciente.forma_pagamento = request.form.get('forma_pagamento', 'Particular')
+        paciente.status = request.form.get('status', 'Ativo')
+        paciente.observacoes = request.form.get('observacoes')
+        db.session.commit()
+        flash('Paciente atualizado!', 'success')
+        return redirect(url_for('listar_pacientes'))
+    return render_template('paciente_form.html', paciente=paciente)
+
+
+@app.route('/pacientes/<int:id>')
+def ver_paciente(id):
+    paciente = Paciente.query.get_or_404(id)
+    sessoes = Sessao.query.filter_by(paciente_id=id).order_by(Sessao.data.desc()).all()
+    total_sessoes = len([s for s in sessoes if s.presenca == 'Compareceu'])
+    return render_template('paciente_detalhe.html', paciente=paciente, sessoes=sessoes, total_sessoes=total_sessoes)
+
+
+# --- Sessões ---
+
+@app.route('/sessoes')
+def listar_sessoes():
+    sessoes = Sessao.query.order_by(Sessao.data.desc()).limit(50).all()
+    return render_template('sessoes.html', sessoes=sessoes)
+
+
+@app.route('/sessoes/nova', methods=['GET', 'POST'])
+def nova_sessao():
+    if request.method == 'POST':
+        paciente_id = int(request.form['paciente_id'])
+        # Calculate session number
+        count = Sessao.query.filter_by(paciente_id=paciente_id, presenca='Compareceu').count()
+        sessao = Sessao(
+            paciente_id=paciente_id,
+            data=_parse_date(request.form['data']),
+            horario_inicio=request.form.get('horario_inicio'),
+            horario_fim=request.form.get('horario_fim'),
+            presenca=request.form.get('presenca', 'Compareceu'),
+            numero_sessao=count + 1 if request.form.get('presenca') == 'Compareceu' else None,
+            pago=request.form.get('pago') == 'Sim',
+            valor_pago=float(request.form.get('valor_pago') or 0),
+            forma_pagamento=request.form.get('forma_pagamento'),
+            observacoes=request.form.get('observacoes')
+        )
+        db.session.add(sessao)
+        db.session.commit()
+        flash('Sessão registrada!', 'success')
+        return redirect(url_for('ver_paciente', id=paciente_id))
+    pacientes = Paciente.query.filter_by(status='Ativo').order_by(Paciente.nome).all()
+    paciente_id = request.args.get('paciente_id')
+    return render_template('sessao_form.html', pacientes=pacientes, paciente_id=paciente_id)
+
+
+@app.route('/sessoes/<int:id>/editar', methods=['GET', 'POST'])
+def editar_sessao(id):
+    sessao = Sessao.query.get_or_404(id)
+    if request.method == 'POST':
+        sessao.data = _parse_date(request.form['data'])
+        sessao.horario_inicio = request.form.get('horario_inicio')
+        sessao.horario_fim = request.form.get('horario_fim')
+        sessao.presenca = request.form.get('presenca', 'Compareceu')
+        sessao.pago = request.form.get('pago') == 'Sim'
+        sessao.valor_pago = float(request.form.get('valor_pago') or 0)
+        sessao.forma_pagamento = request.form.get('forma_pagamento')
+        sessao.observacoes = request.form.get('observacoes')
+        db.session.commit()
+        flash('Sessão atualizada!', 'success')
+        return redirect(url_for('ver_paciente', id=sessao.paciente_id))
+    pacientes = Paciente.query.filter_by(status='Ativo').order_by(Paciente.nome).all()
+    return render_template('sessao_form.html', sessao=sessao, pacientes=pacientes, paciente_id=sessao.paciente_id)
+
+
+# --- Financeiro ---
+
+@app.route('/financeiro')
+def financeiro():
+    # Monthly summary for current year
+    ano = date.today().year
+    meses = []
+    for mes in range(1, 13):
+        total = Sessao.query.filter(
+            db.extract('month', Sessao.data) == mes,
+            db.extract('year', Sessao.data) == ano
+        ).count()
+        receita = db.session.query(db.func.sum(Sessao.valor_pago)).filter(
+            db.extract('month', Sessao.data) == mes,
+            db.extract('year', Sessao.data) == ano,
+            Sessao.pago == True
+        ).scalar() or 0.0
+        pendente = db.session.query(db.func.sum(Sessao.valor_pago)).filter(
+            db.extract('month', Sessao.data) == mes,
+            db.extract('year', Sessao.data) == ano,
+            Sessao.pago == False,
+            Sessao.presenca == 'Compareceu'
+        ).scalar() or 0.0
+        faltas = Sessao.query.filter(
+            db.extract('month', Sessao.data) == mes,
+            db.extract('year', Sessao.data) == ano,
+            Sessao.presenca == 'Faltou'
+        ).count()
+        if total > 0:
+            meses.append({
+                'mes': mes,
+                'nome': _nome_mes(mes),
+                'total_sessoes': total,
+                'receita': receita,
+                'pendente': pendente,
+                'faltas': faltas
+            })
+    return render_template('financeiro.html', meses=meses, ano=ano)
+
+
+# ==================== HELPERS ====================
+
+def _parse_date(date_str):
+    if not date_str:
+        return None
+    try:
+        return datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return None
+
+
+def _nome_mes(mes):
+    nomes = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    return nomes[mes]
+
+
+# ==================== MAIN ====================
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    print("\n  Controle de Pacientes")
+    print("  Acesse no navegador: http://localhost:5000\n")
+    app.run(host='127.0.0.1', port=5000, debug=False)

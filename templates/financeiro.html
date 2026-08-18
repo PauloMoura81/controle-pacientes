@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Financeiro{% endblock %}
+{% block content %}
+<h1>Resumo Financeiro - {{ ano }}</h1>
+
+{% if meses %}
+<table>
+    <thead>
+        <tr>
+            <th>Mês</th>
+            <th>Total Sessões</th>
+            <th>Receita (R$)</th>
+            <th>Pendente (R$)</th>
+            <th>Faltas</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% set ns = namespace(total_receita=0, total_pendente=0) %}
+        {% for m in meses %}
+        <tr>
+            <td>{{ m.nome }}</td>
+            <td>{{ m.total_sessoes }}</td>
+            <td>R$ {{ "%.2f"|format(m.receita) }}</td>
+            <td>{% if m.pendente > 0 %}<span class="text-warning">R$ {{ "%.2f"|format(m.pendente) }}</span>{% else %}R$ 0.00{% endif %}</td>
+            <td>{{ m.faltas }}</td>
+        </tr>
+        {% set ns.total_receita = ns.total_receita + m.receita %}
+        {% set ns.total_pendente = ns.total_pendente + m.pendente %}
+        {% endfor %}
+        <tr class="total-row">
+            <td><strong>TOTAL</strong></td>
+            <td></td>
+            <td><strong>R$ {{ "%.2f"|format(ns.total_receita) }}</strong></td>
+            <td><strong>R$ {{ "%.2f"|format(ns.total_pendente) }}</strong></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+{% else %}
+<p class="empty">Nenhuma sessão registrada em {{ ano }}.</p>
+{% endif %}
+{% endblock %}

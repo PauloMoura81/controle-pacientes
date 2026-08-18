@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Pacientes{% endblock %}
+{% block content %}
+<h1>Pacientes</h1>
+
+<div class="toolbar">
+    <div class="filters">
+        <a href="?status=Ativo" class="btn btn-sm {% if status_filter == 'Ativo' %}btn-active{% endif %}">Ativos</a>
+        <a href="?status=Pausado" class="btn btn-sm {% if status_filter == 'Pausado' %}btn-active{% endif %}">Pausados</a>
+        <a href="?status=Alta" class="btn btn-sm {% if status_filter == 'Alta' %}btn-active{% endif %}">Alta</a>
+        <a href="?status=Todos" class="btn btn-sm {% if status_filter == 'Todos' %}btn-active{% endif %}">Todos</a>
+    </div>
+    <a href="{{ url_for('novo_paciente') }}" class="btn btn-primary">+ Novo Paciente</a>
+</div>
+
+{% if pacientes %}
+<table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Modalidade</th>
+            <th>Dia/Horário</th>
+            <th>Valor</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in pacientes %}
+        <tr>
+            <td><a href="{{ url_for('ver_paciente', id=p.id) }}">{{ p.nome }}</a></td>
+            <td>{{ p.telefone or '-' }}</td>
+            <td>{{ p.modalidade }}</td>
+            <td>{{ p.dia_horario or '-' }}</td>
+            <td>R$ {{ "%.2f"|format(p.valor_sessao) }}</td>
+            <td><span class="badge badge-{{ p.status|lower }}">{{ p.status }}</span></td>
+            <td>
+                <a href="{{ url_for('editar_paciente', id=p.id) }}" class="btn btn-sm">Editar</a>
+                <a href="{{ url_for('nova_sessao', paciente_id=p.id) }}" class="btn btn-sm">+ Sessão</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">Nenhum paciente encontrado.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Sessões{% endblock %}
+{% block content %}
+<h1>Sessões Recentes</h1>
+
+<div class="toolbar">
+    <div></div>
+    <a href="{{ url_for('nova_sessao') }}" class="btn btn-primary">+ Nova Sessão</a>
+</div>
+
+{% if sessoes %}
+<table>
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Paciente</th>
+            <th>Horário</th>
+            <th>Presença</th>
+            <th>Pago</th>
+            <th>Valor</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in sessoes %}
+        <tr>
+            <td>{{ s.data.strftime('%d/%m/%Y') }}</td>
+            <td><a href="{{ url_for('ver_paciente', id=s.paciente.id) }}">{{ s.paciente.nome }}</a></td>
+            <td>{{ s.horario_inicio or '-' }}</td>
+            <td><span class="badge badge-{{ s.presenca|lower }}">{{ s.presenca }}</span></td>
+            <td>{{ 'Sim' if s.pago else 'Não' }}</td>
+            <td>R$ {{ "%.2f"|format(s.valor_pago) }}</td>
+            <td><a href="{{ url_for('editar_sessao', id=s.id) }}" class="btn btn-sm">Editar</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">Nenhuma sessão registrada.</p>
+{% endif %}
+{% endblock %}

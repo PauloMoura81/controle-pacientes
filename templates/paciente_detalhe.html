@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ paciente.nome }}{% endblock %}
+{% block content %}
+<div class="patient-header">
+    <h1>{{ paciente.nome }}</h1>
+    <span class="badge badge-{{ paciente.status|lower }}">{{ paciente.status }}</span>
+</div>
+
+<div class="patient-info">
+    <div class="info-grid">
+        <div><strong>Telefone:</strong> {{ paciente.telefone or '-' }}</div>
+        <div><strong>E-mail:</strong> {{ paciente.email or '-' }}</div>
+        <div><strong>Nascimento:</strong> {{ paciente.data_nascimento.strftime('%d/%m/%Y') if paciente.data_nascimento else '-' }}</div>
+        <div><strong>Início:</strong> {{ paciente.data_inicio.strftime('%d/%m/%Y') if paciente.data_inicio else '-' }}</div>
+        <div><strong>Modalidade:</strong> {{ paciente.modalidade }}</div>
+        <div><strong>Frequência:</strong> {{ paciente.frequencia }}</div>
+        <div><strong>Dia/Horário:</strong> {{ paciente.dia_horario or '-' }}</div>
+        <div><strong>Valor:</strong> R$ {{ "%.2f"|format(paciente.valor_sessao) }}</div>
+        <div><strong>Pagamento:</strong> {{ paciente.forma_pagamento }}</div>
+        <div><strong>Total de Sessões:</strong> {{ total_sessoes }}</div>
+    </div>
+    {% if paciente.observacoes %}
+    <div class="obs"><strong>Observações:</strong> {{ paciente.observacoes }}</div>
+    {% endif %}
+</div>
+
+<div class="toolbar">
+    <h2>Sessões</h2>
+    <div>
+        <a href="{{ url_for('editar_paciente', id=paciente.id) }}" class="btn btn-sm">Editar Paciente</a>
+        <a href="{{ url_for('nova_sessao', paciente_id=paciente.id) }}" class="btn btn-primary btn-sm">+ Nova Sessão</a>
+    </div>
+</div>
+
+{% if sessoes %}
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Data</th>
+            <th>Horário</th>
+            <th>Presença</th>
+            <th>Pago</th>
+            <th>Valor</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in sessoes %}
+        <tr>
+            <td>{{ s.numero_sessao or '-' }}</td>
+            <td>{{ s.data.strftime('%d/%m/%Y') }}</td>
+            <td>{{ s.horario_inicio or '-' }}{% if s.horario_fim %} - {{ s.horario_fim }}{% endif %}</td>
+            <td><span class="badge badge-{{ s.presenca|lower }}">{{ s.presenca }}</span></td>
+            <td>{{ 'Sim' if s.pago else 'Não' }}</td>
+            <td>R$ {{ "%.2f"|format(s.valor_pago) }}</td>
+            <td><a href="{{ url_for('editar_sessao', id=s.id) }}" class="btn btn-sm">Editar</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">Nenhuma sessão registrada.</p>
+{% endif %}
+{% endblock %}

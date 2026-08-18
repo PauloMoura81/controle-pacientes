@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Início - Controle de Pacientes{% endblock %}
+{% block content %}
+<h1>Painel</h1>
+
+<div class="cards">
+    <div class="card">
+        <div class="card-number">{{ total_pacientes }}</div>
+        <div class="card-label">Pacientes Ativos</div>
+    </div>
+    <div class="card">
+        <div class="card-number">{{ total_sessoes_mes }}</div>
+        <div class="card-label">Sessões este Mês</div>
+    </div>
+    <div class="card">
+        <div class="card-number">R$ {{ "%.2f"|format(receita_mes) }}</div>
+        <div class="card-label">Receita do Mês</div>
+    </div>
+    <div class="card card-warning">
+        <div class="card-number">R$ {{ "%.2f"|format(a_receber) }}</div>
+        <div class="card-label">A Receber</div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Próximas Sessões</h2>
+    {% if proximas_sessoes %}
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Paciente</th>
+                <th>Horário</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in proximas_sessoes %}
+            <tr>
+                <td>{{ s.data.strftime('%d/%m/%Y') }}</td>
+                <td>{{ s.paciente.nome }}</td>
+                <td>{{ s.horario_inicio or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty">Nenhuma sessão agendada.</p>
+    {% endif %}
+</div>
+
+<div class="actions">
+    <a href="{{ url_for('novo_paciente') }}" class="btn btn-primary">+ Novo Paciente</a>
+    <a href="{{ url_for('nova_sessao') }}" class="btn btn-secondary">+ Nova Sessão</a>
+</div>
+{% endblock %}
