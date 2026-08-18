@@ -114,3 +114,22 @@ document.addEventListener('DOMContentLoaded', function() {
 function confirmDelete(name) {
     return confirm('Tem certeza que deseja excluir "' + name + '"?\n\nEsta ação não pode ser desfeita.');
 }
+
+
+// ==================== DATE MASK (DD/MM/YYYY) ====================
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInputs = document.querySelectorAll('input[pattern="\\d{2}/\\d{2}/\\d{4}"]');
+    dateInputs.forEach(input => {
+        input.addEventListener('input', function(e) {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length > 8) value = value.substring(0, 8);
+            if (value.length >= 5) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4) + '/' + value.substring(4);
+            } else if (value.length >= 3) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            this.value = value;
+        });
+    });
+});

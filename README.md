@@ -199,6 +199,7 @@ python3 app.py
 - [ ] Campo de link para Evolução do Paciente (Google Drive) no registro de sessão
 - [ ] Abertura dos documentos diretamente pelo app (link externo)
 - [ ] Validação de URLs do Google Drive
+- [ ] Logging em arquivo para análise e troubleshooting (com rotação automática)
 
 ### v1.3.0 — Integração Gmail e Agendamento
 
