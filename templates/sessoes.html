@@ -32,7 +32,7 @@
             <td class="financial-value">R$ {{ "%.2f"|format(s.valor_pago) }}</td>
             <td class="actions-cell">
                 <a href="{{ url_for('editar_sessao', id=s.id) }}" class="btn btn-sm">Editar</a>
-                <form method="POST" action="{{ url_for('excluir_sessao', id=s.id) }}" class="inline-form" onsubmit="return confirmDelete('sessão de {{ s.data.strftime(\'%d/%m/%Y\') }}')">
+                <form method="POST" action="{{ url_for('excluir_sessao', id=s.id) }}" class="inline-form" onsubmit="return confirmDelete('sessão de {{ s.data.strftime('%d/%m/%Y') }}')">
                     <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
                 </form>
             </td>

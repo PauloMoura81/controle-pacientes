@@ -391,6 +391,12 @@ tbody td a {
     border: 1px solid #C3E6CB;
 }
 
+.alert-error {
+    background: #F8D7DA;
+    color: #721C24;
+    border: 1px solid #F5C6CB;
+}
+
 /* Section */
 .section {
     margin-bottom: 2rem;

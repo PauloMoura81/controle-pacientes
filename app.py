@@ -192,7 +192,7 @@ def excluir_paciente(id):
 
 @app.route('/sessoes')
 def listar_sessoes():
-    sessoes = Sessao.query.order_by(Sessao.data.desc()).limit(50).all()
+    sessoes = Sessao.query.join(Paciente).order_by(Sessao.data.desc()).limit(50).all()
     return render_template('sessoes.html', sessoes=sessoes)
 
 
@@ -200,11 +200,15 @@ def listar_sessoes():
 def nova_sessao():
     if request.method == 'POST':
         paciente_id = int(request.form['paciente_id'])
+        data = _parse_date(request.form.get('data'))
+        if not data:
+            flash('A data da sessão é obrigatória.', 'error')
+            return redirect(request.url)
         # Calculate session number
         count = Sessao.query.filter_by(paciente_id=paciente_id, presenca='Compareceu').count()
         sessao = Sessao(
             paciente_id=paciente_id,
-            data=_parse_date(request.form['data']),
+            data=data,
             horario_inicio=request.form.get('horario_inicio'),
             horario_fim=request.form.get('horario_fim'),
             presenca=request.form.get('presenca', 'Compareceu'),
@@ -228,7 +232,11 @@ def nova_sessao():
 def editar_sessao(id):
     sessao = Sessao.query.get_or_404(id)
     if request.method == 'POST':
-        sessao.data = _parse_date(request.form['data'])
+        data = _parse_date(request.form.get('data'))
+        if not data:
+            flash('A data da sessão é obrigatória.', 'error')
+            return redirect(request.url)
+        sessao.data = data
         sessao.horario_inicio = request.form.get('horario_inicio')
         sessao.horario_fim = request.form.get('horario_fim')
         sessao.presenca = request.form.get('presenca', 'Compareceu')
@@ -368,8 +376,14 @@ def exportar_sessoes():
 def _parse_date(date_str):
     if not date_str:
         return None
+    # Try DD/MM/YYYY (Brazilian format)
     try:
-        return datetime.strptime(date_str, '%Y-%m-%d').date()
+        return datetime.strptime(date_str.strip(), '%d/%m/%Y').date()
+    except ValueError:
+        pass
+    # Try YYYY-MM-DD (ISO format, fallback)
+    try:
+        return datetime.strptime(date_str.strip(), '%Y-%m-%d').date()
     except ValueError:
         return None
 

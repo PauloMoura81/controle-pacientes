@@ -20,7 +20,8 @@
 
         <div class="form-group">
             <label for="data">Data *</label>
-            <input type="date" id="data" name="data" value="{{ sessao.data.strftime('%Y-%m-%d') if sessao is defined and sessao else '' }}" required>
+            <input type="text" id="data" name="data" placeholder="DD/MM/AAAA" value="{{ sessao.data.strftime('%d/%m/%Y') if sessao is defined and sessao else '' }}" required pattern="\d{2}/\d{2}/\d{4}" maxlength="10">
+            <small class="form-hint">Formato: DD/MM/AAAA</small>
         </div>
 
         <div class="form-group">
