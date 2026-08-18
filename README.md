@@ -150,6 +150,7 @@ controle-pacientes/
 
 ### v1.1.0 — Melhorias de Usabilidade e Cadastro
 
+- [ ] Ocultar valores financeiros (Receita e A Receber) na tela principal com botão mostrar/ocultar (privacidade)
 - [ ] Busca de pacientes por nome
 - [ ] Ordenação de colunas nas tabelas
 - [ ] Confirmação antes de excluir registros
