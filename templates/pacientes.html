@@ -5,24 +5,36 @@
 
 <div class="toolbar">
     <div class="filters">
-        <a href="?status=Ativo" class="btn btn-sm {% if status_filter == 'Ativo' %}btn-active{% endif %}">Ativos</a>
-        <a href="?status=Pausado" class="btn btn-sm {% if status_filter == 'Pausado' %}btn-active{% endif %}">Pausados</a>
-        <a href="?status=Alta" class="btn btn-sm {% if status_filter == 'Alta' %}btn-active{% endif %}">Alta</a>
-        <a href="?status=Todos" class="btn btn-sm {% if status_filter == 'Todos' %}btn-active{% endif %}">Todos</a>
+        <a href="?status=Ativo&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Ativo' %}btn-active{% endif %}">Ativos</a>
+        <a href="?status=Pausado&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Pausado' %}btn-active{% endif %}">Pausados</a>
+        <a href="?status=Alta&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Alta' %}btn-active{% endif %}">Alta</a>
+        <a href="?status=Desistência&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Desistência' %}btn-active{% endif %}">Desistência</a>
+        <a href="?status=Todos&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Todos' %}btn-active{% endif %}">Todos</a>
     </div>
     <a href="{{ url_for('novo_paciente') }}" class="btn btn-primary">+ Novo Paciente</a>
 </div>
 
+<div class="search-bar">
+    <form method="GET" action="{{ url_for('listar_pacientes') }}" class="search-form">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <input type="text" name="busca" placeholder="Buscar paciente por nome..." value="{{ busca }}" class="search-input">
+        <button type="submit" class="btn btn-sm">Buscar</button>
+        {% if busca %}
+        <a href="?status={{ status_filter }}" class="btn btn-sm">Limpar</a>
+        {% endif %}
+    </form>
+</div>
+
 {% if pacientes %}
-<table>
+<table class="sortable-table" id="pacientes-table">
     <thead>
         <tr>
-            <th>Nome</th>
+            <th class="sortable" data-col="0">Nome <span class="sort-icon"></span></th>
             <th>Telefone</th>
-            <th>Modalidade</th>
+            <th class="sortable" data-col="2">Modalidade <span class="sort-icon"></span></th>
             <th>Dia/Horário</th>
-            <th>Valor</th>
-            <th>Status</th>
+            <th class="sortable" data-col="4">Valor <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="5">Status <span class="sort-icon"></span></th>
             <th>Ações</th>
         </tr>
     </thead>
@@ -33,17 +45,20 @@
             <td>{{ p.telefone or '-' }}</td>
             <td>{{ p.modalidade }}</td>
             <td>{{ p.dia_horario or '-' }}</td>
-            <td>R$ {{ "%.2f"|format(p.valor_sessao) }}</td>
+            <td class="financial-value">R$ {{ "%.2f"|format(p.valor_sessao) }}</td>
             <td><span class="badge badge-{{ p.status|lower }}">{{ p.status }}</span></td>
-            <td>
+            <td class="actions-cell">
                 <a href="{{ url_for('editar_paciente', id=p.id) }}" class="btn btn-sm">Editar</a>
                 <a href="{{ url_for('nova_sessao', paciente_id=p.id) }}" class="btn btn-sm">+ Sessão</a>
+                <form method="POST" action="{{ url_for('excluir_paciente', id=p.id) }}" class="inline-form" onsubmit="return confirmDelete('{{ p.nome }}')">
+                    <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                </form>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 {% else %}
-<p class="empty">Nenhum paciente encontrado.</p>
+<p class="empty">Nenhum paciente encontrado{% if busca %} para "{{ busca }}"{% endif %}.</p>
 {% endif %}
 {% endblock %}

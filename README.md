@@ -11,9 +11,11 @@ Este projeto nasceu da necessidade de uma psicóloga recém-formada ter uma ferr
 
 - **Painel (Dashboard)** — Visão geral com pacientes ativos, sessões do mês, receita e valores pendentes
 - **Cadastro de Pacientes** — Nome, contato, modalidade (presencial/online/híbrido), frequência, valor, status
-- **Registro de Sessões** — Data, horário, presença, pagamento, numeração automática de sessões
+- **Registro de Sessões** — Data, horário, presença, pagamento, numeração automática, anotações administrativas
 - **Controle Financeiro** — Resumo mensal com receita recebida, valores pendentes e faltas
-- **Filtros** — Visualize pacientes por status (ativo, pausado, alta, desistência)
+- **Busca e Filtros** — Busca por nome e filtros por status (ativo, pausado, alta, desistência)
+- **Exportação** — Exporte pacientes e sessões em CSV ou Excel
+- **Privacidade** — Oculte/exiba valores financeiros com um clique
 - **Interface Responsiva** — Funciona bem em desktop e tablet
 
 ### Stack Tecnológica
@@ -22,8 +24,9 @@ Este projeto nasceu da necessidade de uma psicóloga recém-formada ter uma ferr
 |-----------|-----------|
 | Backend | Python 3 + Flask |
 | Banco de Dados | SQLite (arquivo local) |
-| Frontend | HTML5 + CSS3 (sem frameworks JS) |
+| Frontend | HTML5 + CSS3 + JavaScript (sem frameworks) |
 | ORM | Flask-SQLAlchemy |
+| Export Excel | openpyxl |
 
 ## Instalação
 
@@ -111,17 +114,20 @@ controle-pacientes/
 ├── IniciarApp.command      # Script de inicialização rápida (macOS)
 ├── README.md               # Este arquivo
 ├── static/
-│   └── css/
-│       └── style.css       # Estilos da interface
+│   ├── css/
+│   │   └── style.css       # Estilos da interface
+│   └── js/
+│       └── app.js          # JavaScript (ordenação, toggle, confirmações)
 ├── templates/
 │   ├── base.html           # Template base (navbar, footer)
 │   ├── index.html          # Dashboard
-│   ├── pacientes.html      # Lista de pacientes
+│   ├── pacientes.html      # Lista de pacientes (com busca)
 │   ├── paciente_form.html  # Formulário cadastro/edição
 │   ├── paciente_detalhe.html # Detalhe do paciente + sessões
 │   ├── sessoes.html        # Lista de sessões
-│   ├── sessao_form.html    # Formulário de sessão
-│   └── financeiro.html     # Resumo financeiro
+│   ├── sessao_form.html    # Formulário de sessão (com anotações)
+│   ├── financeiro.html     # Resumo financeiro
+│   └── exportar.html       # Página de exportação (CSV/Excel)
 └── dados/                  # Criado automaticamente na primeira execução
     └── pacientes.db        # Banco de dados SQLite
 ```
@@ -131,6 +137,45 @@ controle-pacientes/
 *(Em breve)*
 
 ## Changelog
+
+### v1.1.0 (2026-08-18)
+
+**Melhorias de Usabilidade e Cadastro**
+
+- Ocultar/exibir valores financeiros (Receita e A Receber) com botão toggle — preferência salva no navegador
+- Busca de pacientes por nome (parcial, case-insensitive)
+- Ordenação de colunas nas tabelas (clique no cabeçalho para ordenar asc/desc)
+- Confirmação antes de excluir pacientes e sessões
+- Exportar dados para CSV e Excel (pacientes e sessões separadamente)
+- Campo de anotações administrativas por sessão (sem conteúdo clínico)
+- Adicionada opção "PsyMeet" no campo Convênio/Particular e nas formas de pagamento
+
+#### Atualização da v1.0.0 para v1.1.0
+
+Se você já tem o app rodando com dados da v1.0.0, siga estes passos para atualizar:
+
+```bash
+# 1. Pare o app (Ctrl+C no terminal)
+
+# 2. Atualize o código
+cd controle-pacientes
+git pull
+
+# 3. Ative o ambiente virtual
+source venv/bin/activate        # macOS/Linux
+# venv\Scripts\activate         # Windows
+
+# 4. Instale as novas dependências (openpyxl)
+pip install -r requirements.txt
+
+# 5. Migre o banco de dados (adiciona a coluna 'anotacoes' à tabela de sessões)
+python3 -c "from app import app, db; app.app_context().push(); db.create_all()"
+
+# 6. Inicie o app normalmente
+python3 app.py
+```
+
+> **Nota:** O comando `db.create_all()` no passo 5 adiciona a nova coluna `anotacoes` à tabela de sessões sem perder nenhum dado existente. Seus pacientes e sessões serão preservados. Recomenda-se fazer um backup do arquivo `dados/pacientes.db` antes de atualizar.
 
 ### v1.0.0 (2026-08-17)
 
@@ -147,16 +192,6 @@ controle-pacientes/
 - Script de inicialização rápida para macOS
 
 ## Roadmap
-
-### v1.1.0 — Melhorias de Usabilidade e Cadastro
-
-- [ ] Ocultar valores financeiros (Receita e A Receber) na tela principal com botão mostrar/ocultar (privacidade)
-- [ ] Busca de pacientes por nome
-- [ ] Ordenação de colunas nas tabelas
-- [ ] Confirmação antes de excluir registros
-- [ ] Exportar dados para CSV/Excel
-- [ ] Campo de anotações por sessão (sem conteúdo clínico — apenas administrativo)
-- [ ] Adicionar opção "Psymeetsocial" no campo Convênio/Particular do cadastro de paciente
 
 ### v1.2.0 — Integração Google Drive (Documentos Clínicos)
 

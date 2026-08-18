@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Exportar Dados{% endblock %}
+{% block content %}
+<h1>Exportar Dados</h1>
+
+<div class="export-section">
+    <div class="export-card">
+        <h2>Pacientes</h2>
+        <p>Exportar a lista completa de pacientes cadastrados.</p>
+        <div class="export-actions">
+            <a href="{{ url_for('exportar_pacientes', formato='csv') }}" class="btn btn-primary">Exportar CSV</a>
+            <a href="{{ url_for('exportar_pacientes', formato='excel') }}" class="btn btn-secondary">Exportar Excel</a>
+        </div>
+    </div>
+
+    <div class="export-card">
+        <h2>Sessões</h2>
+        <p>Exportar o histórico completo de sessões registradas.</p>
+        <div class="export-actions">
+            <a href="{{ url_for('exportar_sessoes', formato='csv') }}" class="btn btn-primary">Exportar CSV</a>
+            <a href="{{ url_for('exportar_sessoes', formato='excel') }}" class="btn btn-secondary">Exportar Excel</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

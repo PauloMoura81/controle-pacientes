@@ -3,15 +3,22 @@
 {% block content %}
 <h1>Resumo Financeiro - {{ ano }}</h1>
 
+<div class="toolbar">
+    <div></div>
+    <button type="button" class="btn btn-sm" id="toggle-financial" onclick="toggleFinancial()">
+        <span id="toggle-icon">&#128065;</span> Ocultar Valores
+    </button>
+</div>
+
 {% if meses %}
-<table>
+<table class="sortable-table" id="financeiro-table">
     <thead>
         <tr>
-            <th>Mês</th>
-            <th>Total Sessões</th>
-            <th>Receita (R$)</th>
-            <th>Pendente (R$)</th>
-            <th>Faltas</th>
+            <th class="sortable" data-col="0">Mês <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="1">Total Sessões <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="2">Receita (R$) <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="3">Pendente (R$) <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="4">Faltas <span class="sort-icon"></span></th>
         </tr>
     </thead>
     <tbody>
@@ -20,8 +27,8 @@
         <tr>
             <td>{{ m.nome }}</td>
             <td>{{ m.total_sessoes }}</td>
-            <td>R$ {{ "%.2f"|format(m.receita) }}</td>
-            <td>{% if m.pendente > 0 %}<span class="text-warning">R$ {{ "%.2f"|format(m.pendente) }}</span>{% else %}R$ 0.00{% endif %}</td>
+            <td class="financial-value">R$ {{ "%.2f"|format(m.receita) }}</td>
+            <td class="financial-value">{% if m.pendente > 0 %}<span class="text-warning">R$ {{ "%.2f"|format(m.pendente) }}</span>{% else %}R$ 0.00{% endif %}</td>
             <td>{{ m.faltas }}</td>
         </tr>
         {% set ns.total_receita = ns.total_receita + m.receita %}
@@ -30,8 +37,8 @@
         <tr class="total-row">
             <td><strong>TOTAL</strong></td>
             <td></td>
-            <td><strong>R$ {{ "%.2f"|format(ns.total_receita) }}</strong></td>
-            <td><strong>R$ {{ "%.2f"|format(ns.total_pendente) }}</strong></td>
+            <td class="financial-value"><strong>R$ {{ "%.2f"|format(ns.total_receita) }}</strong></td>
+            <td class="financial-value"><strong>R$ {{ "%.2f"|format(ns.total_pendente) }}</strong></td>
             <td></td>
         </tr>
     </tbody>

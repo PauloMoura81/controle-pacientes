@@ -13,13 +13,20 @@
         <div class="card-label">Sessões este Mês</div>
     </div>
     <div class="card">
-        <div class="card-number">R$ {{ "%.2f"|format(receita_mes) }}</div>
+        <div class="card-number financial-value">R$ {{ "%.2f"|format(receita_mes) }}</div>
         <div class="card-label">Receita do Mês</div>
     </div>
     <div class="card card-warning">
-        <div class="card-number">R$ {{ "%.2f"|format(a_receber) }}</div>
+        <div class="card-number financial-value">R$ {{ "%.2f"|format(a_receber) }}</div>
         <div class="card-label">A Receber</div>
     </div>
+</div>
+
+<div class="toolbar">
+    <div></div>
+    <button type="button" class="btn btn-sm" id="toggle-financial" onclick="toggleFinancial()">
+        <span id="toggle-icon">&#128065;</span> Ocultar Valores
+    </button>
 </div>
 
 <div class="section">
