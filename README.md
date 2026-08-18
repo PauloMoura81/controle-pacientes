@@ -148,22 +148,34 @@ controle-pacientes/
 
 ## Roadmap
 
-### v1.1.0 — Melhorias de Usabilidade
+### v1.1.0 — Melhorias de Usabilidade e Cadastro
 
 - [ ] Busca de pacientes por nome
 - [ ] Ordenação de colunas nas tabelas
 - [ ] Confirmação antes de excluir registros
 - [ ] Exportar dados para CSV/Excel
 - [ ] Campo de anotações por sessão (sem conteúdo clínico — apenas administrativo)
+- [ ] Adicionar opção "Psymeetsocial" no campo Convênio/Particular do cadastro de paciente
 
-### v1.2.0 — Agenda e Lembretes
+### v1.2.0 — Integração Google Drive (Documentos Clínicos)
 
+- [ ] Campo de link para Prontuário da Sessão (Google Drive) no registro de sessão
+- [ ] Campo de link para Evolução do Paciente (Google Drive) no registro de sessão
+- [ ] Abertura dos documentos diretamente pelo app (link externo)
+- [ ] Validação de URLs do Google Drive
+
+### v1.3.0 — Integração Gmail e Agendamento
+
+- [ ] Integração com Gmail API para envio de e-mails
+- [ ] Envio automático de confirmação de sessão por e-mail ao paciente
+- [ ] Envio de lembrete de sessão (configurável: 24h antes, 1h antes)
+- [ ] Template de e-mail personalizável (nome do paciente, data, horário, modalidade)
 - [ ] Calendário visual com sessões agendadas
 - [ ] Agendamento recorrente automático (baseado na frequência)
 - [ ] Indicador visual de conflitos de horário
 - [ ] Geração de recibos em PDF para pacientes
 
-### v1.3.0 — Financeiro Avançado
+### v1.4.0 — Financeiro Avançado
 
 - [ ] Gráficos de receita mensal (chart.js)
 - [ ] Controle de despesas do consultório
@@ -181,12 +193,13 @@ controle-pacientes/
 
 ### Futuro (ideias)
 
-- [ ] Integração com Google Calendar
+- [ ] Integração com Google Calendar (sincronização bidirecional)
 - [ ] Envio de lembretes por WhatsApp/SMS (via API)
 - [ ] Dashboard com gráficos de evolução do consultório
 - [ ] Suporte a múltiplos profissionais (clínica)
 - [ ] Prontuário eletrônico simplificado (com criptografia)
 - [ ] Importação de dados de planilhas Excel existentes
+- [ ] Integração com Google Workspace (Docs, Sheets) para geração automática de documentos
 
 ## Contribuição
 
