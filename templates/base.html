@@ -16,6 +16,7 @@
             <a href="{{ url_for('listar_pacientes') }}">Pacientes</a>
             <a href="{{ url_for('listar_sessoes') }}">Sessões</a>
             <a href="{{ url_for('financeiro') }}">Financeiro</a>
+            <a href="{{ url_for('exportar') }}">Exportar</a>
         </div>
     </nav>
 
@@ -32,7 +33,9 @@
     </main>
 
     <footer class="footer">
-        <p>Controle de Pacientes &mdash; Dados armazenados localmente</p>
+        <p>Controle de Pacientes v1.1.0 &mdash; Dados armazenados localmente</p>
     </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

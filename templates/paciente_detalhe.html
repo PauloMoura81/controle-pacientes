@@ -15,7 +15,7 @@
         <div><strong>Modalidade:</strong> {{ paciente.modalidade }}</div>
         <div><strong>Frequência:</strong> {{ paciente.frequencia }}</div>
         <div><strong>Dia/Horário:</strong> {{ paciente.dia_horario or '-' }}</div>
-        <div><strong>Valor:</strong> R$ {{ "%.2f"|format(paciente.valor_sessao) }}</div>
+        <div><strong>Valor:</strong> <span class="financial-value">R$ {{ "%.2f"|format(paciente.valor_sessao) }}</span></div>
         <div><strong>Pagamento:</strong> {{ paciente.forma_pagamento }}</div>
         <div><strong>Total de Sessões:</strong> {{ total_sessoes }}</div>
     </div>
@@ -29,19 +29,23 @@
     <div>
         <a href="{{ url_for('editar_paciente', id=paciente.id) }}" class="btn btn-sm">Editar Paciente</a>
         <a href="{{ url_for('nova_sessao', paciente_id=paciente.id) }}" class="btn btn-primary btn-sm">+ Nova Sessão</a>
+        <form method="POST" action="{{ url_for('excluir_paciente', id=paciente.id) }}" class="inline-form" onsubmit="return confirmDelete('{{ paciente.nome }}')">
+            <button type="submit" class="btn btn-sm btn-danger">Excluir Paciente</button>
+        </form>
     </div>
 </div>
 
 {% if sessoes %}
-<table>
+<table class="sortable-table" id="sessoes-table">
     <thead>
         <tr>
-            <th>#</th>
-            <th>Data</th>
+            <th class="sortable" data-col="0"># <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="1">Data <span class="sort-icon"></span></th>
             <th>Horário</th>
-            <th>Presença</th>
+            <th class="sortable" data-col="3">Presença <span class="sort-icon"></span></th>
             <th>Pago</th>
-            <th>Valor</th>
+            <th class="sortable" data-col="5">Valor <span class="sort-icon"></span></th>
+            <th>Anotações</th>
             <th>Ações</th>
         </tr>
     </thead>
@@ -53,8 +57,14 @@
             <td>{{ s.horario_inicio or '-' }}{% if s.horario_fim %} - {{ s.horario_fim }}{% endif %}</td>
             <td><span class="badge badge-{{ s.presenca|lower }}">{{ s.presenca }}</span></td>
             <td>{{ 'Sim' if s.pago else 'Não' }}</td>
-            <td>R$ {{ "%.2f"|format(s.valor_pago) }}</td>
-            <td><a href="{{ url_for('editar_sessao', id=s.id) }}" class="btn btn-sm">Editar</a></td>
+            <td class="financial-value">R$ {{ "%.2f"|format(s.valor_pago) }}</td>
+            <td class="anotacoes-cell">{{ s.anotacoes[:50] + '...' if s.anotacoes and s.anotacoes|length > 50 else s.anotacoes or '-' }}</td>
+            <td class="actions-cell">
+                <a href="{{ url_for('editar_sessao', id=s.id) }}" class="btn btn-sm">Editar</a>
+                <form method="POST" action="{{ url_for('excluir_sessao', id=s.id) }}" class="inline-form" onsubmit="return confirmDelete('sessão de {{ s.data.strftime(\'%d/%m/%Y\') }}')">
+                    <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </tbody>

@@ -1,12 +1,15 @@
 """
 Controle de Pacientes - App Web Local
 Desenvolvido para psicólogos gerenciarem seus atendimentos.
+v1.1.0 - Melhorias de Usabilidade e Cadastro
 """
 
+import io
+import csv
 import os
 import sys
 from datetime import datetime, date
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response, send_file
 from flask_sqlalchemy import SQLAlchemy
 
 # Determine data directory (user's home)
@@ -43,12 +46,13 @@ class Paciente(db.Model):
     frequencia = db.Column(db.String(20), default='Semanal')  # Semanal, Quinzenal, Mensal
     dia_horario = db.Column(db.String(50), nullable=True)
     valor_sessao = db.Column(db.Float, default=0.0)
-    forma_pagamento = db.Column(db.String(20), default='Particular')  # Particular, Convênio
+    forma_pagamento = db.Column(db.String(20), default='Particular')  # Particular, Convênio, PsyMeet
     status = db.Column(db.String(20), default='Ativo')  # Ativo, Pausado, Alta, Desistência
     observacoes = db.Column(db.Text, nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.now)
 
-    sessoes = db.relationship('Sessao', backref='paciente', lazy=True, order_by='Sessao.data.desc()')
+    sessoes = db.relationship('Sessao', backref='paciente', lazy=True, cascade='all, delete-orphan',
+                              order_by='Sessao.data.desc()')
 
 
 class Sessao(db.Model):
@@ -65,6 +69,7 @@ class Sessao(db.Model):
     valor_pago = db.Column(db.Float, default=0.0)
     forma_pagamento = db.Column(db.String(30), nullable=True)
     observacoes = db.Column(db.Text, nullable=True)
+    anotacoes = db.Column(db.Text, nullable=True)  # v1.1.0: anotações administrativas
 
 
 # ==================== ROUTES ====================
@@ -104,11 +109,16 @@ def index():
 @app.route('/pacientes')
 def listar_pacientes():
     status_filter = request.args.get('status', 'Ativo')
-    if status_filter == 'Todos':
-        pacientes = Paciente.query.order_by(Paciente.nome).all()
-    else:
-        pacientes = Paciente.query.filter_by(status=status_filter).order_by(Paciente.nome).all()
-    return render_template('pacientes.html', pacientes=pacientes, status_filter=status_filter)
+    busca = request.args.get('busca', '').strip()
+
+    query = Paciente.query
+    if status_filter != 'Todos':
+        query = query.filter_by(status=status_filter)
+    if busca:
+        query = query.filter(Paciente.nome.ilike(f'%{busca}%'))
+
+    pacientes = query.order_by(Paciente.nome).all()
+    return render_template('pacientes.html', pacientes=pacientes, status_filter=status_filter, busca=busca)
 
 
 @app.route('/pacientes/novo', methods=['GET', 'POST'])
@@ -169,6 +179,15 @@ def ver_paciente(id):
     return render_template('paciente_detalhe.html', paciente=paciente, sessoes=sessoes, total_sessoes=total_sessoes)
 
 
+@app.route('/pacientes/<int:id>/excluir', methods=['POST'])
+def excluir_paciente(id):
+    paciente = Paciente.query.get_or_404(id)
+    db.session.delete(paciente)
+    db.session.commit()
+    flash(f'Paciente "{paciente.nome}" excluído.', 'success')
+    return redirect(url_for('listar_pacientes'))
+
+
 # --- Sessões ---
 
 @app.route('/sessoes')
@@ -193,7 +212,8 @@ def nova_sessao():
             pago=request.form.get('pago') == 'Sim',
             valor_pago=float(request.form.get('valor_pago') or 0),
             forma_pagamento=request.form.get('forma_pagamento'),
-            observacoes=request.form.get('observacoes')
+            observacoes=request.form.get('observacoes'),
+            anotacoes=request.form.get('anotacoes')
         )
         db.session.add(sessao)
         db.session.commit()
@@ -216,11 +236,22 @@ def editar_sessao(id):
         sessao.valor_pago = float(request.form.get('valor_pago') or 0)
         sessao.forma_pagamento = request.form.get('forma_pagamento')
         sessao.observacoes = request.form.get('observacoes')
+        sessao.anotacoes = request.form.get('anotacoes')
         db.session.commit()
         flash('Sessão atualizada!', 'success')
         return redirect(url_for('ver_paciente', id=sessao.paciente_id))
     pacientes = Paciente.query.filter_by(status='Ativo').order_by(Paciente.nome).all()
     return render_template('sessao_form.html', sessao=sessao, pacientes=pacientes, paciente_id=sessao.paciente_id)
+
+
+@app.route('/sessoes/<int:id>/excluir', methods=['POST'])
+def excluir_sessao(id):
+    sessao = Sessao.query.get_or_404(id)
+    paciente_id = sessao.paciente_id
+    db.session.delete(sessao)
+    db.session.commit()
+    flash('Sessão excluída.', 'success')
+    return redirect(url_for('ver_paciente', id=paciente_id))
 
 
 # --- Financeiro ---
@@ -263,6 +294,75 @@ def financeiro():
     return render_template('financeiro.html', meses=meses, ano=ano)
 
 
+# --- Exportação ---
+
+@app.route('/exportar')
+def exportar():
+    return render_template('exportar.html')
+
+
+@app.route('/exportar/pacientes')
+def exportar_pacientes():
+    formato = request.args.get('formato', 'csv')
+    pacientes = Paciente.query.order_by(Paciente.nome).all()
+
+    headers = ['Nome', 'Data Nascimento', 'Telefone', 'E-mail', 'Contato Emergência',
+               'Tel. Emergência', 'Data Início', 'Modalidade', 'Frequência', 'Dia/Horário',
+               'Valor Sessão', 'Forma Pagamento', 'Status', 'Observações']
+
+    rows = []
+    for p in pacientes:
+        rows.append([
+            p.nome,
+            p.data_nascimento.strftime('%d/%m/%Y') if p.data_nascimento else '',
+            p.telefone or '',
+            p.email or '',
+            p.contato_emergencia or '',
+            p.tel_emergencia or '',
+            p.data_inicio.strftime('%d/%m/%Y') if p.data_inicio else '',
+            p.modalidade,
+            p.frequencia,
+            p.dia_horario or '',
+            f'{p.valor_sessao:.2f}',
+            p.forma_pagamento,
+            p.status,
+            p.observacoes or ''
+        ])
+
+    if formato == 'excel':
+        return _export_excel('pacientes', headers, rows)
+    return _export_csv('pacientes', headers, rows)
+
+
+@app.route('/exportar/sessoes')
+def exportar_sessoes():
+    formato = request.args.get('formato', 'csv')
+    sessoes = Sessao.query.order_by(Sessao.data.desc()).all()
+
+    headers = ['Paciente', 'Data', 'Horário Início', 'Horário Fim', 'Presença',
+               'Nº Sessão', 'Pago', 'Valor Pago', 'Forma Pagamento', 'Observações', 'Anotações']
+
+    rows = []
+    for s in sessoes:
+        rows.append([
+            s.paciente.nome,
+            s.data.strftime('%d/%m/%Y'),
+            s.horario_inicio or '',
+            s.horario_fim or '',
+            s.presenca,
+            str(s.numero_sessao) if s.numero_sessao else '',
+            'Sim' if s.pago else 'Não',
+            f'{s.valor_pago:.2f}',
+            s.forma_pagamento or '',
+            s.observacoes or '',
+            s.anotacoes or ''
+        ])
+
+    if formato == 'excel':
+        return _export_excel('sessoes', headers, rows)
+    return _export_csv('sessoes', headers, rows)
+
+
 # ==================== HELPERS ====================
 
 def _parse_date(date_str):
@@ -280,11 +380,66 @@ def _nome_mes(mes):
     return nomes[mes]
 
 
+def _export_csv(name, headers, rows):
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(headers)
+    writer.writerows(rows)
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename={name}_{date.today().strftime("%Y%m%d")}.csv'}
+    )
+
+
+def _export_excel(name, headers, rows):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = name.capitalize()
+
+    # Header styling
+    header_font = Font(bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='6C63FF', end_color='6C63FF', fill_type='solid')
+
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center')
+
+    # Data rows
+    for row_idx, row in enumerate(rows, 2):
+        for col_idx, value in enumerate(row, 1):
+            ws.cell(row=row_idx, column=col_idx, value=value)
+
+    # Auto-width columns
+    for col in ws.columns:
+        max_length = 0
+        for cell in col:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        ws.column_dimensions[col[0].column_letter].width = min(max_length + 2, 40)
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'{name}_{date.today().strftime("%Y%m%d")}.xlsx'
+    )
+
+
 # ==================== MAIN ====================
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    print("\n  Controle de Pacientes")
+    print("\n  Controle de Pacientes v1.1.0")
     print("  Acesse no navegador: http://localhost:5000\n")
     app.run(host='127.0.0.1', port=5000, debug=False)

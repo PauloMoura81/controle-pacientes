@@ -1,4 +1,4 @@
-/* Controle de Pacientes - Estilo */
+/* Controle de Pacientes - Estilo v1.1.0 */
 :root {
     --primary: #6C63FF;
     --primary-dark: #5A52D5;
@@ -123,6 +123,21 @@ thead th {
     text-transform: uppercase;
 }
 
+thead th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+thead th.sortable:hover {
+    background: #E4E2FF;
+}
+
+.sort-icon {
+    font-size: 0.75rem;
+    color: var(--primary);
+}
+
 tbody td {
     padding: 0.7rem 1rem;
     border-bottom: 1px solid var(--border);
@@ -196,6 +211,17 @@ tbody td a {
     border-color: var(--secondary);
 }
 
+.btn-danger {
+    background: var(--white);
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+.btn-danger:hover {
+    background: var(--danger);
+    color: var(--white);
+}
+
 .btn-sm {
     padding: 0.3rem 0.7rem;
     font-size: 0.8rem;
@@ -218,6 +244,35 @@ tbody td a {
 .filters {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Search Bar */
+.search-bar {
+    margin-bottom: 1rem;
+}
+
+.search-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.search-input {
+    padding: 0.5rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-family: inherit;
+    flex: 1;
+    max-width: 350px;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
 }
 
 /* Forms */
@@ -269,10 +324,29 @@ tbody td a {
     box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
 }
 
+.form-hint {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 0.3rem;
+    font-style: italic;
+}
+
 .form-actions {
     margin-top: 1.5rem;
     display: flex;
     gap: 0.8rem;
+}
+
+/* Inline form (for delete buttons) */
+.inline-form {
+    display: inline;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.3rem;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 /* Patient detail */
@@ -332,6 +406,58 @@ tbody td a {
     gap: 1rem;
 }
 
+/* Financial toggle - hidden values */
+.hidden-value {
+    filter: none;
+}
+
+.mask {
+    color: var(--text-light);
+    letter-spacing: 2px;
+    font-weight: 400;
+}
+
+/* Export page */
+.export-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.export-card {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-left: 4px solid var(--primary);
+}
+
+.export-card h2 {
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.export-card p {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.export-actions {
+    display: flex;
+    gap: 0.8rem;
+}
+
+/* Anotacoes cell */
+.anotacoes-cell {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Utilities */
 .empty {
     color: var(--text-light);
@@ -372,5 +498,18 @@ tbody td a {
     }
     .cards {
         grid-template-columns: 1fr 1fr;
+    }
+    .search-form {
+        flex-wrap: wrap;
+    }
+    .search-input {
+        max-width: 100%;
+    }
+    .export-section {
+        grid-template-columns: 1fr;
+    }
+    .actions-cell {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

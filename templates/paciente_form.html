@@ -71,7 +71,7 @@
         <div class="form-group">
             <label for="forma_pagamento">Convênio/Particular</label>
             <select id="forma_pagamento" name="forma_pagamento">
-                {% for opt in ['Particular', 'Convênio'] %}
+                {% for opt in ['Particular', 'Convênio', 'PsyMeet'] %}
                 <option value="{{ opt }}" {% if paciente and paciente.forma_pagamento == opt %}selected{% endif %}>{{ opt }}</option>
                 {% endfor %}
             </select>
