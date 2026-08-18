@@ -32,10 +32,27 @@ Este projeto nasceu da necessidade de uma psicóloga recém-formada ter uma ferr
 
 ### Pré-requisitos
 
-- Python 3.9 ou superior
-- pip (gerenciador de pacotes Python)
+- Python 3.9 ou superior — [Baixar aqui](https://www.python.org/downloads/)
+  - **Windows:** Na instalação, marque a opção **"Add Python to PATH"**
+  - **macOS:** Basta instalar normalmente
 
-### macOS
+### Instalação Rápida (recomendado)
+
+1. Baixe o projeto: clique em **Code > Download ZIP** no GitHub e extraia a pasta
+2. Dentro da pasta `controle-pacientes`, clique duas vezes em:
+   - **Windows:** `instalar.bat`
+   - **macOS:** `instalar.command`
+3. Aguarde a mensagem "Instalação concluída com sucesso!"
+
+### Iniciar o Programa
+
+Após a instalação, para abrir o programa clique duas vezes em:
+- **Windows:** `IniciarApp.bat`
+- **macOS:** `IniciarApp.command`
+
+O navegador abrirá automaticamente com o programa.
+
+### Instalação Manual (avançado)
 
 ```bash
 # 1. Clone o repositório
@@ -88,6 +105,12 @@ Após executar, acesse no navegador: **http://localhost:5000**
 
 ### Iniciar o app
 
+Clique duas vezes em `IniciarApp.bat` (Windows) ou `IniciarApp.command` (macOS).
+
+O navegador abrirá automaticamente. Para parar, feche a janela do terminal.
+
+### Iniciar manualmente (via terminal)
+
 ```bash
 cd controle-pacientes
 source venv/bin/activate   # macOS/Linux
@@ -95,10 +118,6 @@ python3 app.py
 ```
 
 Para parar, pressione `Ctrl + C` no Terminal.
-
-### Atalho rápido (macOS)
-
-Dê duplo clique no arquivo `IniciarApp.command` para iniciar o app sem precisar abrir o Terminal manualmente.
 
 ### Onde ficam os dados?
 
@@ -111,7 +130,10 @@ Para fazer backup, basta copiar esse arquivo para outro local.
 controle-pacientes/
 ├── app.py                  # Aplicação principal (rotas, modelos, lógica)
 ├── requirements.txt        # Dependências Python
-├── IniciarApp.command      # Script de inicialização rápida (macOS)
+├── instalar.bat            # Script de instalação (Windows)
+├── instalar.command        # Script de instalação (macOS)
+├── IniciarApp.bat          # Iniciar o programa (Windows)
+├── IniciarApp.command      # Iniciar o programa (macOS)
 ├── README.md               # Este arquivo
 ├── static/
 │   ├── css/
