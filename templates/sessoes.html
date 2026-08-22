@@ -1,11 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Sessões{% endblock %}
 {% block content %}
-<h1>Sessões Recentes</h1>
+<h1>Sessões</h1>
 
 <div class="toolbar">
-    <div></div>
+    <div class="filters">
+        {% for opt, label in [('Todas', 'Todas'), ('Compareceu', 'Compareceu'), ('Faltou', 'Faltou'), ('Cancelou', 'Cancelou'), ('Remarcou', 'Remarcou')] %}
+        <a href="{{ url_for('listar_sessoes', presenca=opt, paciente_id=paciente_id_filter, pago=pago_filter, data_inicio=data_inicio, data_fim=data_fim) }}"
+           class="btn btn-sm {% if presenca_filter == opt %}btn-active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
     <a href="{{ url_for('nova_sessao') }}" class="btn btn-primary">+ Nova Sessão</a>
+</div>
+
+<div class="search-bar">
+    <form method="GET" action="{{ url_for('listar_sessoes') }}" class="search-form">
+        <input type="hidden" name="presenca" value="{{ presenca_filter }}">
+        <select name="paciente_id" class="search-input search-input-sm">
+            <option value="">Todos os pacientes</option>
+            {% for p in pacientes %}
+            <option value="{{ p.id }}" {% if paciente_id_filter == p.id|string %}selected{% endif %}>{{ p.nome }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="data_inicio" placeholder="De (DD/MM/AAAA)" value="{{ data_inicio }}" class="search-input search-input-sm" pattern="\d{2}/\d{2}/\d{4}" maxlength="10">
+        <input type="text" name="data_fim" placeholder="Até (DD/MM/AAAA)" value="{{ data_fim }}" class="search-input search-input-sm" pattern="\d{2}/\d{2}/\d{4}" maxlength="10">
+        <select name="pago" class="search-input search-input-sm">
+            <option value="">Pago: Todos</option>
+            <option value="Sim" {% if pago_filter == 'Sim' %}selected{% endif %}>Pago: Sim</option>
+            <option value="Não" {% if pago_filter == 'Não' %}selected{% endif %}>Pago: Não</option>
+        </select>
+        <button type="submit" class="btn btn-sm">Filtrar</button>
+        {% if paciente_id_filter or pago_filter or data_inicio or data_fim or presenca_filter != 'Todas' %}
+        <a href="{{ url_for('listar_sessoes') }}" class="btn btn-sm">Limpar</a>
+        {% endif %}
+    </form>
 </div>
 
 {% if sessoes %}
@@ -47,6 +75,6 @@
     </tbody>
 </table>
 {% else %}
-<p class="empty">Nenhuma sessão registrada.</p>
+<p class="empty">Nenhuma sessão encontrada para os filtros selecionados.</p>
 {% endif %}
 {% endblock %}

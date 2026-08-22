@@ -1,7 +1,7 @@
 """
 Controle de Pacientes - App Web Local
 Desenvolvido para psicólogos gerenciarem seus atendimentos.
-v1.2.0 - Integração Google Drive (Documentos Clínicos)
+v1.2.1 - Filtros na tela de Sessões
 """
 
 import io
@@ -231,8 +231,36 @@ def excluir_paciente(id):
 
 @app.route('/sessoes')
 def listar_sessoes():
-    sessoes = Sessao.query.join(Paciente).order_by(Sessao.data.desc()).limit(50).all()
-    return render_template('sessoes.html', sessoes=sessoes)
+    presenca_filter = request.args.get('presenca', 'Todas')
+    paciente_id_filter = request.args.get('paciente_id', '').strip()
+    pago_filter = request.args.get('pago', '').strip()
+    data_inicio_str = request.args.get('data_inicio', '').strip()
+    data_fim_str = request.args.get('data_fim', '').strip()
+
+    query = Sessao.query.join(Paciente)
+    if presenca_filter != 'Todas':
+        query = query.filter(Sessao.presenca == presenca_filter)
+    if paciente_id_filter:
+        query = query.filter(Sessao.paciente_id == int(paciente_id_filter))
+    if pago_filter in ('Sim', 'Não'):
+        query = query.filter(Sessao.pago == (pago_filter == 'Sim'))
+    data_inicio = _parse_date(data_inicio_str)
+    if data_inicio:
+        query = query.filter(Sessao.data >= data_inicio)
+    data_fim = _parse_date(data_fim_str)
+    if data_fim:
+        query = query.filter(Sessao.data <= data_fim)
+
+    sessoes = query.order_by(Sessao.data.desc()).all()
+    pacientes = Paciente.query.order_by(Paciente.nome).all()
+    return render_template('sessoes.html',
+                           sessoes=sessoes,
+                           pacientes=pacientes,
+                           presenca_filter=presenca_filter,
+                           paciente_id_filter=paciente_id_filter,
+                           pago_filter=pago_filter,
+                           data_inicio=data_inicio_str,
+                           data_fim=data_fim_str)
 
 
 @app.route('/sessoes/nova', methods=['GET', 'POST'])
@@ -538,7 +566,7 @@ if __name__ == '__main__':
     with app.app_context():
         _run_migrations()
         db.create_all()
-    logger.info("Aplicação iniciada - v1.2.0")
-    print("\n  Controle de Pacientes v1.2.0")
+    logger.info("Aplicação iniciada - v1.2.1")
+    print("\n  Controle de Pacientes v1.2.1")
     print("  Acesse no navegador: http://127.0.0.1:5000\n")
     app.run(host='127.0.0.1', port=5000, debug=False)

@@ -162,6 +162,16 @@ controle-pacientes/
 
 ## Changelog
 
+### v1.2.1 (2026-08-22)
+
+**Filtros na tela de Sessões**
+
+- Filtro por presença (Todas, Compareceu, Faltou, Cancelou, Remarcou)
+- Filtro por paciente
+- Filtro por período (data início/fim)
+- Filtro por status de pagamento (Sim/Não)
+- Filtros combináveis entre si e preservados ao trocar de página
+
 ### v1.2.0 (2026-08-22)
 
 **Integração Google Drive (Documentos Clínicos)**

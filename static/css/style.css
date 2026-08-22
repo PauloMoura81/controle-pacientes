@@ -256,6 +256,7 @@ tbody td a {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .search-input {
@@ -273,6 +274,11 @@ tbody td a {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+}
+
+.search-input-sm {
+    flex: 0 1 170px;
+    max-width: 170px;
 }
 
 /* Forms */
