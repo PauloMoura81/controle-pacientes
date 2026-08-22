@@ -28,7 +28,7 @@ echo "  ou pressione Ctrl+C"
 echo ""
 
 # Abrir navegador automaticamente
-sleep 1 && open http://localhost:5000 &
+sleep 1 && open http://127.0.0.1:5000 &
 
 # Iniciar o app
 python3 app.py

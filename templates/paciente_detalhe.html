@@ -45,7 +45,7 @@
             <th class="sortable" data-col="3">Presença <span class="sort-icon"></span></th>
             <th>Pago</th>
             <th class="sortable" data-col="5">Valor <span class="sort-icon"></span></th>
-            <th>Anotações</th>
+            <th>Docs</th>
             <th>Ações</th>
         </tr>
     </thead>
@@ -58,7 +58,11 @@
             <td><span class="badge badge-{{ s.presenca|lower }}">{{ s.presenca }}</span></td>
             <td>{{ 'Sim' if s.pago else 'Não' }}</td>
             <td class="financial-value">R$ {{ "%.2f"|format(s.valor_pago) }}</td>
-            <td class="anotacoes-cell">{{ s.anotacoes[:50] + '...' if s.anotacoes and s.anotacoes|length > 50 else s.anotacoes or '-' }}</td>
+            <td class="doc-links">
+                {% if s.link_prontuario %}<a href="{{ s.link_prontuario }}" target="_blank" rel="noopener" title="Abrir Prontuário da Sessão">📄</a>{% endif %}
+                {% if s.link_evolucao %}<a href="{{ s.link_evolucao }}" target="_blank" rel="noopener" title="Abrir Evolução do Paciente">📈</a>{% endif %}
+                {% if not s.link_prontuario and not s.link_evolucao %}-{% endif %}
+            </td>
             <td class="actions-cell">
                 <a href="{{ url_for('editar_sessao', id=s.id) }}" class="btn btn-sm">Editar</a>
                 <form method="POST" action="{{ url_for('excluir_sessao', id=s.id) }}" class="inline-form" onsubmit="return confirmDelete('sessão de {{ s.data.strftime('%d/%m/%Y') }}')">

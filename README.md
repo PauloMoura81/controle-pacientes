@@ -151,7 +151,9 @@ controle-pacientes/
 │   ├── financeiro.html     # Resumo financeiro
 │   └── exportar.html       # Página de exportação (CSV/Excel)
 └── dados/                  # Criado automaticamente na primeira execução
-    └── pacientes.db        # Banco de dados SQLite
+    ├── pacientes.db        # Banco de dados SQLite
+    └── logs/
+        └── app.log         # Log da aplicação (rotação automática)
 ```
 
 ## Screenshots
@@ -159,6 +161,35 @@ controle-pacientes/
 *(Em breve)*
 
 ## Changelog
+
+### v1.2.0 (2026-08-22)
+
+**Integração Google Drive (Documentos Clínicos)**
+
+- Campo de link para Prontuário da Sessão (Google Drive) no registro de sessão
+- Campo de link para Evolução do Paciente (Google Drive) no registro de sessão
+- Abertura dos documentos diretamente pelo app (ícones 📄/📈 nas listagens de sessões, abrem em nova aba)
+- Validação de URLs do Google Drive (aceita apenas links de `drive.google.com` ou `docs.google.com`)
+- Logging em arquivo (`dados/logs/app.log`) com rotação automática, para análise e troubleshooting
+- Migração automática de banco de dados na inicialização: colunas novas são adicionadas a instalações existentes sem apagar nenhum dado
+- Campo "Anotações Administrativas" removido do registro de sessão
+- Novo campo "Evolução" no registro de sessão, exibido antes de "Observações" na tela de edição
+
+#### Atualização da v1.1.0 para v1.2.0
+
+```bash
+# 1. Pare o app (Ctrl+C no terminal)
+
+# 2. Atualize o código
+cd controle-pacientes
+git pull
+
+# 3. Ative o ambiente virtual e reinicie o app normalmente
+source venv/bin/activate        # macOS/Linux
+python3 app.py
+```
+
+> **Nota:** A partir da v1.2.0, o próprio app detecta e adiciona automaticamente as colunas novas ao banco de dados na inicialização — não é mais necessário rodar nenhum comando manual de migração. Ainda assim, recomenda-se fazer um backup do arquivo `dados/pacientes.db` antes de atualizar.
 
 ### v1.1.0 (2026-08-18)
 
@@ -215,13 +246,13 @@ python3 app.py
 
 ## Roadmap
 
-### v1.2.0 — Integração Google Drive (Documentos Clínicos)
+### v1.2.0 — Integração Google Drive (Documentos Clínicos) ✅ concluído
 
-- [ ] Campo de link para Prontuário da Sessão (Google Drive) no registro de sessão
-- [ ] Campo de link para Evolução do Paciente (Google Drive) no registro de sessão
-- [ ] Abertura dos documentos diretamente pelo app (link externo)
-- [ ] Validação de URLs do Google Drive
-- [ ] Logging em arquivo para análise e troubleshooting (com rotação automática)
+- [x] Campo de link para Prontuário da Sessão (Google Drive) no registro de sessão
+- [x] Campo de link para Evolução do Paciente (Google Drive) no registro de sessão
+- [x] Abertura dos documentos diretamente pelo app (link externo)
+- [x] Validação de URLs do Google Drive
+- [x] Logging em arquivo para análise e troubleshooting (com rotação automática)
 
 ### v1.3.0 — Integração Gmail e Agendamento
 

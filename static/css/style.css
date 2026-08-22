@@ -454,14 +454,19 @@ tbody td a {
     gap: 0.8rem;
 }
 
-/* Anotacoes cell */
-.anotacoes-cell {
-    font-size: 0.8rem;
-    color: var(--text-light);
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* Doc links (Google Drive) */
+.doc-links {
     white-space: nowrap;
+}
+
+.doc-links a {
+    text-decoration: none;
+    font-size: 1.1rem;
+    margin-right: 0.3rem;
+}
+
+.doc-links a:hover {
+    opacity: 0.7;
 }
 
 /* Utilities */

@@ -1,13 +1,16 @@
 """
 Controle de Pacientes - App Web Local
 Desenvolvido para psicólogos gerenciarem seus atendimentos.
-v1.1.0 - Melhorias de Usabilidade e Cadastro
+v1.2.0 - Integração Google Drive (Documentos Clínicos)
 """
 
 import io
 import csv
 import os
+import re
 import sys
+import logging
+from logging.handlers import RotatingFileHandler
 from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response, send_file
 from flask_sqlalchemy import SQLAlchemy
@@ -21,12 +24,43 @@ else:
 DATA_DIR = os.path.join(BASE_DIR, "dados")
 os.makedirs(DATA_DIR, exist_ok=True)
 
+LOG_DIR = os.path.join(DATA_DIR, "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'psico-controle-local-2024'
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(DATA_DIR, 'pacientes.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+
+# ==================== LOGGING ====================
+# Log em arquivo com rotação automática (para análise e troubleshooting)
+
+log_handler = RotatingFileHandler(
+    os.path.join(LOG_DIR, 'app.log'), maxBytes=1_000_000, backupCount=5, encoding='utf-8'
+)
+log_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+
+logger = logging.getLogger('controle_pacientes')
+logger.setLevel(logging.INFO)
+logger.addHandler(log_handler)
+
+app.logger.addHandler(log_handler)
+app.logger.setLevel(logging.INFO)
+
+
+# ==================== VALIDAÇÃO DE URL (Google Drive) ====================
+
+DRIVE_URL_PATTERN = re.compile(r'^https://(drive|docs)\.google\.com/', re.IGNORECASE)
+
+
+def _validar_url_drive(url):
+    """Aceita vazio (campo opcional) ou uma URL do drive.google.com / docs.google.com."""
+    if not url:
+        return True
+    return bool(DRIVE_URL_PATTERN.match(url.strip()))
 
 
 # ==================== MODELS ====================
@@ -68,8 +102,10 @@ class Sessao(db.Model):
     pago = db.Column(db.Boolean, default=False)
     valor_pago = db.Column(db.Float, default=0.0)
     forma_pagamento = db.Column(db.String(30), nullable=True)
+    evolucao = db.Column(db.Text, nullable=True)  # v1.2.0: evolução do paciente na sessão
     observacoes = db.Column(db.Text, nullable=True)
-    anotacoes = db.Column(db.Text, nullable=True)  # v1.1.0: anotações administrativas
+    link_prontuario = db.Column(db.Text, nullable=True)  # v1.2.0: link do Prontuário da Sessão (Google Drive)
+    link_evolucao = db.Column(db.Text, nullable=True)  # v1.2.0: link da Evolução do Paciente (Google Drive)
 
 
 # ==================== ROUTES ====================
@@ -142,6 +178,7 @@ def novo_paciente():
         )
         db.session.add(paciente)
         db.session.commit()
+        logger.info(f"Paciente criado: id={paciente.id} nome={paciente.nome}")
         flash('Paciente cadastrado com sucesso!', 'success')
         return redirect(url_for('listar_pacientes'))
     return render_template('paciente_form.html', paciente=None)
@@ -166,6 +203,7 @@ def editar_paciente(id):
         paciente.status = request.form.get('status', 'Ativo')
         paciente.observacoes = request.form.get('observacoes')
         db.session.commit()
+        logger.info(f"Paciente atualizado: id={paciente.id} nome={paciente.nome}")
         flash('Paciente atualizado!', 'success')
         return redirect(url_for('listar_pacientes'))
     return render_template('paciente_form.html', paciente=paciente)
@@ -182,6 +220,7 @@ def ver_paciente(id):
 @app.route('/pacientes/<int:id>/excluir', methods=['POST'])
 def excluir_paciente(id):
     paciente = Paciente.query.get_or_404(id)
+    logger.info(f"Paciente excluído: id={paciente.id} nome={paciente.nome}")
     db.session.delete(paciente)
     db.session.commit()
     flash(f'Paciente "{paciente.nome}" excluído.', 'success')
@@ -204,6 +243,11 @@ def nova_sessao():
         if not data:
             flash('A data da sessão é obrigatória.', 'error')
             return redirect(request.url)
+        link_prontuario = request.form.get('link_prontuario', '').strip() or None
+        link_evolucao = request.form.get('link_evolucao', '').strip() or None
+        if not _validar_url_drive(link_prontuario) or not _validar_url_drive(link_evolucao):
+            flash('Os links de Prontuário/Evolução devem ser URLs do Google Drive (drive.google.com ou docs.google.com).', 'error')
+            return redirect(request.url)
         # Calculate session number
         count = Sessao.query.filter_by(paciente_id=paciente_id, presenca='Compareceu').count()
         sessao = Sessao(
@@ -216,11 +260,14 @@ def nova_sessao():
             pago=request.form.get('pago') == 'Sim',
             valor_pago=float(request.form.get('valor_pago') or 0),
             forma_pagamento=request.form.get('forma_pagamento'),
+            evolucao=request.form.get('evolucao'),
             observacoes=request.form.get('observacoes'),
-            anotacoes=request.form.get('anotacoes')
+            link_prontuario=link_prontuario,
+            link_evolucao=link_evolucao
         )
         db.session.add(sessao)
         db.session.commit()
+        logger.info(f"Sessão criada: id={sessao.id} paciente_id={paciente_id} data={data}")
         flash('Sessão registrada!', 'success')
         return redirect(url_for('ver_paciente', id=paciente_id))
     pacientes = Paciente.query.filter_by(status='Ativo').order_by(Paciente.nome).all()
@@ -236,6 +283,11 @@ def editar_sessao(id):
         if not data:
             flash('A data da sessão é obrigatória.', 'error')
             return redirect(request.url)
+        link_prontuario = request.form.get('link_prontuario', '').strip() or None
+        link_evolucao = request.form.get('link_evolucao', '').strip() or None
+        if not _validar_url_drive(link_prontuario) or not _validar_url_drive(link_evolucao):
+            flash('Os links de Prontuário/Evolução devem ser URLs do Google Drive (drive.google.com ou docs.google.com).', 'error')
+            return redirect(request.url)
         sessao.data = data
         sessao.horario_inicio = request.form.get('horario_inicio')
         sessao.horario_fim = request.form.get('horario_fim')
@@ -243,9 +295,12 @@ def editar_sessao(id):
         sessao.pago = request.form.get('pago') == 'Sim'
         sessao.valor_pago = float(request.form.get('valor_pago') or 0)
         sessao.forma_pagamento = request.form.get('forma_pagamento')
+        sessao.evolucao = request.form.get('evolucao')
         sessao.observacoes = request.form.get('observacoes')
-        sessao.anotacoes = request.form.get('anotacoes')
+        sessao.link_prontuario = link_prontuario
+        sessao.link_evolucao = link_evolucao
         db.session.commit()
+        logger.info(f"Sessão atualizada: id={sessao.id} paciente_id={sessao.paciente_id}")
         flash('Sessão atualizada!', 'success')
         return redirect(url_for('ver_paciente', id=sessao.paciente_id))
     pacientes = Paciente.query.filter_by(status='Ativo').order_by(Paciente.nome).all()
@@ -256,6 +311,7 @@ def editar_sessao(id):
 def excluir_sessao(id):
     sessao = Sessao.query.get_or_404(id)
     paciente_id = sessao.paciente_id
+    logger.info(f"Sessão excluída: id={sessao.id} paciente_id={paciente_id}")
     db.session.delete(sessao)
     db.session.commit()
     flash('Sessão excluída.', 'success')
@@ -348,7 +404,7 @@ def exportar_sessoes():
     sessoes = Sessao.query.order_by(Sessao.data.desc()).all()
 
     headers = ['Paciente', 'Data', 'Horário Início', 'Horário Fim', 'Presença',
-               'Nº Sessão', 'Pago', 'Valor Pago', 'Forma Pagamento', 'Observações', 'Anotações']
+               'Nº Sessão', 'Pago', 'Valor Pago', 'Forma Pagamento', 'Evolução', 'Observações']
 
     rows = []
     for s in sessoes:
@@ -362,8 +418,8 @@ def exportar_sessoes():
             'Sim' if s.pago else 'Não',
             f'{s.valor_pago:.2f}',
             s.forma_pagamento or '',
-            s.observacoes or '',
-            s.anotacoes or ''
+            s.evolucao or '',
+            s.observacoes or ''
         ])
 
     if formato == 'excel':
@@ -449,11 +505,40 @@ def _export_excel(name, headers, rows):
     )
 
 
+# ==================== MIGRAÇÕES ====================
+
+def _run_migrations():
+    """Adiciona colunas novas a tabelas já existentes, sem apagar dados.
+
+    db.create_all() só cria tabelas ausentes — não altera tabelas que já
+    existem. Bancos de produção (com pacientes/sessões já cadastrados)
+    precisam desse passo para receber colunas adicionadas em versões novas.
+    """
+    inspector = db.inspect(db.engine)
+    if 'sessoes' not in inspector.get_table_names():
+        return  # tabela ainda não existe, será criada pelo create_all()
+
+    colunas_existentes = {c['name'] for c in inspector.get_columns('sessoes')}
+    colunas_novas = {
+        'link_prontuario': 'TEXT',
+        'link_evolucao': 'TEXT',
+        'evolucao': 'TEXT',
+    }
+    with db.engine.connect() as conn:
+        for nome, tipo in colunas_novas.items():
+            if nome not in colunas_existentes:
+                conn.execute(db.text(f'ALTER TABLE sessoes ADD COLUMN {nome} {tipo}'))
+                conn.commit()
+                logger.info(f"Migração: coluna '{nome}' adicionada à tabela 'sessoes'.")
+
+
 # ==================== MAIN ====================
 
 if __name__ == '__main__':
     with app.app_context():
+        _run_migrations()
         db.create_all()
-    print("\n  Controle de Pacientes v1.1.0")
-    print("  Acesse no navegador: http://localhost:5000\n")
+    logger.info("Aplicação iniciada - v1.2.0")
+    print("\n  Controle de Pacientes v1.2.0")
+    print("  Acesse no navegador: http://127.0.0.1:5000\n")
     app.run(host='127.0.0.1', port=5000, debug=False)

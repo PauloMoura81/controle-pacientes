@@ -67,14 +67,25 @@
         </div>
 
         <div class="form-group full-width">
+            <label for="evolucao">Evolução</label>
+            <textarea id="evolucao" name="evolucao" rows="3">{{ sessao.evolucao if sessao is defined and sessao else '' }}</textarea>
+        </div>
+
+        <div class="form-group full-width">
             <label for="observacoes">Observações</label>
             <textarea id="observacoes" name="observacoes" rows="3">{{ sessao.observacoes if sessao is defined and sessao else '' }}</textarea>
         </div>
 
         <div class="form-group full-width">
-            <label for="anotacoes">Anotações Administrativas</label>
-            <textarea id="anotacoes" name="anotacoes" rows="3" placeholder="Notas administrativas sobre esta sessão (ex: reagendamento, observações de pagamento...)">{{ sessao.anotacoes if sessao is defined and sessao else '' }}</textarea>
-            <small class="form-hint">Apenas informações administrativas — não incluir conteúdo clínico.</small>
+            <label for="link_prontuario">📄 Link do Prontuário da Sessão (Google Drive)</label>
+            <input type="url" id="link_prontuario" name="link_prontuario" placeholder="https://drive.google.com/..." pattern="https://(drive|docs)\.google\.com/.*" value="{{ sessao.link_prontuario if sessao is defined and sessao and sessao.link_prontuario else '' }}">
+            <small class="form-hint">Cole aqui o link do documento no Google Drive. Deixe em branco se não houver.</small>
+        </div>
+
+        <div class="form-group full-width">
+            <label for="link_evolucao">📈 Link da Evolução do Paciente (Google Drive)</label>
+            <input type="url" id="link_evolucao" name="link_evolucao" placeholder="https://drive.google.com/..." pattern="https://(drive|docs)\.google\.com/.*" value="{{ sessao.link_evolucao if sessao is defined and sessao and sessao.link_evolucao else '' }}">
+            <small class="form-hint">Cole aqui o link do documento no Google Drive. Deixe em branco se não houver.</small>
         </div>
     </div>
 
