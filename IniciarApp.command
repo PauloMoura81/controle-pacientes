@@ -27,8 +27,8 @@ echo "  Para PARAR o programa, feche esta janela"
 echo "  ou pressione Ctrl+C"
 echo ""
 
-# Abrir navegador automaticamente
-sleep 1 && open http://127.0.0.1:5000 &
+# Abrir navegador automaticamente (força Safari, evita erros no Chrome)
+sleep 1 && open -a Safari http://127.0.0.1:8642 &
 
 # Iniciar o app
 python3 app.py

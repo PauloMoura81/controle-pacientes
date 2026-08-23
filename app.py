@@ -1,7 +1,7 @@
 """
 Controle de Pacientes - App Web Local
 Desenvolvido para psicólogos gerenciarem seus atendimentos.
-v1.2.1 - Filtros na tela de Sessões
+v1.2.2 - Correção de porta e abertura do navegador
 """
 
 import io
@@ -566,7 +566,7 @@ if __name__ == '__main__':
     with app.app_context():
         _run_migrations()
         db.create_all()
-    logger.info("Aplicação iniciada - v1.2.1")
-    print("\n  Controle de Pacientes v1.2.1")
-    print("  Acesse no navegador: http://127.0.0.1:5000\n")
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    logger.info("Aplicação iniciada - v1.2.2")
+    print("\n  Controle de Pacientes v1.2.2")
+    print("  Acesse no navegador: http://127.0.0.1:8642\n")
+    app.run(host='127.0.0.1', port=8642, debug=False)

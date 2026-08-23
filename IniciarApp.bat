@@ -28,7 +28,7 @@ echo  ou pressione Ctrl+C
 echo.
 
 :: Abrir navegador automaticamente após 2 segundos
-start "" http://localhost:5000
+start "" http://127.0.0.1:8642
 
 :: Iniciar o app
 python app.py

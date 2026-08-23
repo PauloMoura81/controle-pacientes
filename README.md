@@ -99,7 +99,7 @@ pip install -r requirements.txt
 python3 app.py
 ```
 
-Após executar, acesse no navegador: **http://localhost:5000**
+Após executar, acesse no navegador: **http://127.0.0.1:8642**
 
 ## Uso
 
@@ -161,6 +161,13 @@ controle-pacientes/
 *(Em breve)*
 
 ## Changelog
+
+### v1.2.2 (2026-08-22)
+
+**Correção de porta e abertura do navegador**
+
+- Porta padrão alterada de 5000 para 8642, reduzindo o risco de conflito com outros serviços que usam portas comuns (ex.: o AirPlay Receiver do macOS, que também usa a porta 5000 e é suspeito de causar o erro 403 observado ao abrir o app no Chrome)
+- Script de inicialização no macOS (`IniciarApp.command`) agora força a abertura no Safari, contornando o erro no Chrome
 
 ### v1.2.1 (2026-08-22)
 
