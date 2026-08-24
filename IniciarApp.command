@@ -27,8 +27,17 @@ echo "  Para PARAR o programa, feche esta janela"
 echo "  ou pressione Ctrl+C"
 echo ""
 
-# Abrir navegador automaticamente (força Safari, evita erros no Chrome)
-sleep 1 && open -a Safari http://127.0.0.1:8642 &
+# Abrir navegador automaticamente somente quando o servidor já estiver
+# respondendo (a primeira inicialização pode demorar mais de 1 segundo)
+(
+    for i in $(seq 1 30); do
+        if curl -s -o /dev/null "http://127.0.0.1:8642"; then
+            open -a Safari http://127.0.0.1:8642
+            break
+        fi
+        sleep 1
+    done
+) &
 
 # Iniciar o app
 python3 app.py
