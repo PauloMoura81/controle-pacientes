@@ -9,6 +9,7 @@
         <a href="?status=Pausado&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Pausado' %}btn-active{% endif %}">Pausados</a>
         <a href="?status=Alta&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Alta' %}btn-active{% endif %}">Alta</a>
         <a href="?status=Desistência&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Desistência' %}btn-active{% endif %}">Desistência</a>
+        <a href="?status=Encaminhado&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Encaminhado' %}btn-active{% endif %}">Encaminhado</a>
         <a href="?status=Todos&busca={{ busca }}" class="btn btn-sm {% if status_filter == 'Todos' %}btn-active{% endif %}">Todos</a>
     </div>
     <a href="{{ url_for('novo_paciente') }}" class="btn btn-primary">+ Novo Paciente</a>

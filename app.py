@@ -8,6 +8,7 @@ import io
 import csv
 import os
 import re
+import shutil
 import sys
 import logging
 from logging.handlers import RotatingFileHandler
@@ -81,7 +82,7 @@ class Paciente(db.Model):
     dia_horario = db.Column(db.String(50), nullable=True)
     valor_sessao = db.Column(db.Float, default=0.0)
     forma_pagamento = db.Column(db.String(20), default='Particular')  # Particular, Convênio, PsyMeet
-    status = db.Column(db.String(20), default='Ativo')  # Ativo, Pausado, Alta, Desistência
+    status = db.Column(db.String(20), default='Ativo')  # Ativo, Pausado, Alta, Desistência, Encaminhado
     observacoes = db.Column(db.Text, nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.now)
 
@@ -453,6 +454,59 @@ def exportar_sessoes():
     if formato == 'excel':
         return _export_excel('sessoes', headers, rows)
     return _export_csv('sessoes', headers, rows)
+
+
+@app.route('/backup')
+def backup():
+    return render_template('backup.html')
+
+
+@app.route('/backup/download')
+def backup_download():
+    db.session.remove()
+    db.engine.dispose()
+    db_path = os.path.join(DATA_DIR, 'pacientes.db')
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    return send_file(
+        db_path,
+        as_attachment=True,
+        download_name=f'backup_pacientes_{timestamp}.db'
+    )
+
+
+@app.route('/backup/restaurar', methods=['POST'])
+def backup_restaurar():
+    arquivo = request.files.get('arquivo')
+    if not arquivo or arquivo.filename == '':
+        flash('Selecione um arquivo de backup (.db) para restaurar.', 'error')
+        return redirect(url_for('backup'))
+
+    if not arquivo.filename.lower().endswith('.db'):
+        flash('Arquivo inválido. Selecione um arquivo .db de backup.', 'error')
+        return redirect(url_for('backup'))
+
+    conteudo = arquivo.read()
+    if not conteudo.startswith(b'SQLite format 3\x00'):
+        flash('Arquivo inválido: não é um banco de dados SQLite válido.', 'error')
+        return redirect(url_for('backup'))
+
+    db_path = os.path.join(DATA_DIR, 'pacientes.db')
+
+    db.session.remove()
+    db.engine.dispose()
+
+    backups_dir = os.path.join(DATA_DIR, 'backups')
+    os.makedirs(backups_dir, exist_ok=True)
+    if os.path.exists(db_path):
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        shutil.copy2(db_path, os.path.join(backups_dir, f'pre_restauracao_{timestamp}.db'))
+
+    with open(db_path, 'wb') as f:
+        f.write(conteudo)
+
+    logger.info("Banco de dados restaurado a partir de backup enviado pelo usuário.")
+    flash('Backup restaurado com sucesso! Uma cópia do banco anterior foi guardada em dados/backups.', 'success')
+    return redirect(url_for('backup'))
 
 
 # ==================== HELPERS ====================

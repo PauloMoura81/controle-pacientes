@@ -83,7 +83,7 @@
         <div class="form-group">
             <label for="status">Status</label>
             <select id="status" name="status">
-                {% for opt in ['Ativo', 'Pausado', 'Alta', 'Desistência'] %}
+                {% for opt in ['Ativo', 'Pausado', 'Alta', 'Desistência', 'Encaminhado'] %}
                 <option value="{{ opt }}" {% if paciente.status == opt %}selected{% endif %}>{{ opt }}</option>
                 {% endfor %}
             </select>

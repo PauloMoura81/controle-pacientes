@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Backup e Restauração{% endblock %}
+{% block content %}
+<h1>Backup e Restauração</h1>
+
+<div class="export-section">
+    <div class="export-card">
+        <h2>Backup</h2>
+        <p>Baixe uma cópia completa do banco de dados atual.</p>
+        <div class="export-actions">
+            <a href="{{ url_for('backup_download') }}" class="btn btn-primary">Baixar Backup</a>
+        </div>
+    </div>
+
+    <div class="export-card">
+        <h2>Restaurar</h2>
+        <p>Envie um arquivo de backup (.db) para restaurar os dados. O banco de dados atual será substituído — uma cópia de segurança é guardada automaticamente antes da restauração.</p>
+        <form method="POST" action="{{ url_for('backup_restaurar') }}" enctype="multipart/form-data" class="export-actions"
+              onsubmit="return confirm('Tem certeza? Isso vai substituir todos os dados atuais pelo conteúdo do arquivo de backup.');">
+            <input type="file" name="arquivo" accept=".db" required>
+            <button type="submit" class="btn btn-danger">Restaurar Backup</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
